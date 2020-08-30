@@ -19,7 +19,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.zxing.Result;
+
+import org.json.JSONObject;
 
 import me.dm7.barcodescanner.zxing.ZXingScannerView;
 
@@ -143,25 +149,48 @@ public class MainActivity extends AppCompatActivity implements ZXingScannerView.
     @Override
     public void handleResult(Result result) {
         final String scanResult = result.getText();
-        Log.d("QRCodeScanner", result.getBarcodeFormat().toString());
+        String url = "https://recyclops-hack.herokuapp.com/api/v1/products/12444";
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, (JSONObject) null, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                //textView.setText("Response: " + response.toString());
+                Log.d("Json","Success");
+                Log.d("Json",response.toString());
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // TODO: Handle error
+                Log.d("error", error.toString());
+            }
+        });
+        // Access the RequestQueue through your singleton class.
+        MySingleton.getInstance(this).addToRequestQueue(jsonObjectRequest);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Scan Result");
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int which) {
-                scannerView.resumeCameraPreview(MainActivity.this);
+                moveToActivityTwo();
             }
         });
-        builder.setNeutralButton("Visit", new DialogInterface.OnClickListener() {
+        /*builder.setNeutralButton("Visit", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int which) {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(scanResult));
                 startActivity(intent);
             }
-        });
+        });*/
         builder.setMessage(scanResult);
         AlertDialog alert = builder.create();
         alert.show();
     }
+    private void moveToActivityTwo(){
+        Intent intent = new Intent(MainActivity.this, Activity2.class);
+        startActivity(intent);
+    }
+
 }
