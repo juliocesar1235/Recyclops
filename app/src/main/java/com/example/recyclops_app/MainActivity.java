@@ -25,7 +25,10 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.zxing.Result;
 
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.sql.Struct;
 
 import me.dm7.barcodescanner.zxing.ZXingScannerView;
 
@@ -36,6 +39,8 @@ public class MainActivity extends AppCompatActivity implements ZXingScannerView.
     private static final int REQUEST_CAMERA = 1;
     private ZXingScannerView scannerView;
     private static int camId = Camera.CameraInfo.CAMERA_FACING_BACK;
+    private JSONObject productJson = null;
+    String stringData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,17 +154,24 @@ public class MainActivity extends AppCompatActivity implements ZXingScannerView.
     @Override
     public void handleResult(Result result) {
         final String scanResult = result.getText();
-        String url = "https://recyclops-hack.herokuapp.com/api/v1/products/12444";
-        final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, (JSONObject) null, new Response.Listener<JSONObject>() {
+        String url = "https://recyclops-hack.herokuapp.com/api/v1/products/" + scanResult;
 
+        final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, (JSONObject) null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                //textView.setText("Response: " + response.toString());
-                Log.d("Json","Success");
-                Log.d("Json",response.toString());
+                try {
+
+                    if (response.get("data").toString() != "null"){
+                        productJson = (JSONObject) response.get("data");
+                    }else{
+                        Log.d("error", "request cannot be completed");
+                    }
+                } catch (JSONException e) {
+                    scannerView.resumeCameraPreview(MainActivity.this);
+                    e.printStackTrace();
+                }
             }
         }, new Response.ErrorListener() {
-
             @Override
             public void onErrorResponse(VolleyError error) {
                 // TODO: Handle error
@@ -170,27 +182,31 @@ public class MainActivity extends AppCompatActivity implements ZXingScannerView.
         MySingleton.getInstance(this).addToRequestQueue(jsonObjectRequest);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Scan Result");
+        builder.setTitle("Product barcode");
+
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int which) {
-                moveToActivityTwo();
+                if (productJson != null) {
+                    moveToActivityTwo(productJson);
+                } else {
+                    scannerView.resumeCameraPreview(MainActivity.this);
+                }
             }
         });
-        /*builder.setNeutralButton("Visit", new DialogInterface.OnClickListener() {
+        builder.setNeutralButton("Scan again", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int which) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(scanResult));
-                startActivity(intent);
+                scannerView.resumeCameraPreview(MainActivity.this);
             }
-        });*/
+        });
         builder.setMessage(scanResult);
         AlertDialog alert = builder.create();
         alert.show();
     }
-    private void moveToActivityTwo(){
+    private void moveToActivityTwo(JSONObject productJson){
         Intent intent = new Intent(MainActivity.this, Activity2.class);
-       // intent.putExtra("Product data", product.toString());
+        intent.putExtra("ProductData", productJson.toString());
         startActivity(intent);
     }
 
