@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements ZXingScannerView.
     public void handleResult(Result result) {
         final String scanResult = result.getText();
         String url = "https://recyclops-hack.herokuapp.com/api/v1/products/12444";
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, (JSONObject) null, new Response.Listener<JSONObject>() {
+        final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, (JSONObject) null, new Response.Listener<JSONObject>() {
 
             @Override
             public void onResponse(JSONObject response) {
@@ -190,6 +190,7 @@ public class MainActivity extends AppCompatActivity implements ZXingScannerView.
     }
     private void moveToActivityTwo(){
         Intent intent = new Intent(MainActivity.this, Activity2.class);
+       // intent.putExtra("Product data", product.toString());
         startActivity(intent);
     }
 
